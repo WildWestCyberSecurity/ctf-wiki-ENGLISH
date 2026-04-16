@@ -26,7 +26,7 @@ Security**, and **Misc (Miscellaneous Security)**.
 
 -   **Misc - Miscellaneous Security**
 
-    Using the book "Ghost in the Wires: My Adventures as the World's Most Wanted Hacker" translated by Zhuge Jianwei and some typical MISC challenges as entry points, the content mainly covers information gathering, encoding analysis, forensic analysis, steganography analysis, and more.
+    Using the book "Ghost in the Wires: My Adventures as the World's Most Wanted Hacker" by Kevin Mitnick and some typical MISC challenges as entry points, the content mainly covers information gathering, encoding analysis, forensic analysis, steganography analysis, and more.
 
 ## National College Student Information Security Competition - Competition Content
 
@@ -36,4 +36,4 @@ In 2016, the National College Student Information Security Competition began hol
 2.  Software Reverse Engineering. Involves various programming techniques on Windows/Linux/Android platforms, requiring the use of common tools for reverse analysis of source code and binary files, mastering reverse analysis of Android mobile application APK files, and understanding encryption/decryption, kernel programming, algorithms, anti-debugging, and code obfuscation techniques.
 3.  Vulnerability Discovery and Exploitation. Proficiency in C/C++/Python/PHP/Java/Ruby/Assembly and other languages, discovering vulnerabilities in Windows/Linux (x86/x86\_64 platform) binary programs, mastering buffer overflow and format string attacks, and writing and using shellcode.
 4.  Cryptography Principles and Applications. Mastering classical and modern cryptography, analyzing cryptographic algorithms and protocols, computing keys, and performing encryption/decryption operations.
-5.  Other Content. Includes information gathering skills, programming ability, mobile security, cloud computing security, trusted computing, indigenous and controllable technology, steganography and information hiding, computer forensics technology and file recovery skills, computer networking fundamentals, and network traffic analysis capabilities.
+5.  Other Content. Includes information gathering skills, programming ability, mobile security, cloud computing security, trusted computing, domestically developed and controllable technology, steganography and information hiding, computer forensics technology and file recovery skills, computer networking fundamentals, and network traffic analysis capabilities.
