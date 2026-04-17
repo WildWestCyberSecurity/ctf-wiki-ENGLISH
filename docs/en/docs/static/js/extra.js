@@ -33,5 +33,5 @@ window.addEventListener('load', function() {
 
 }, false);
 
-//添加空格
+// Add CJK spacing
 pangu.spacingPageBody();
