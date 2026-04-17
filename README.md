@@ -1,7 +1,7 @@
 # CTF Wiki — English Edition
 
 > **An English fork of [ctf-wiki](https://github.com/ctf-wiki/ctf-wiki)** — a comprehensive, community-driven guide to Capture The Flag (CTF) competitions and cybersecurity techniques.
-[![Discord](https://shields.io)]([https://discord.gg](https://discord.gg/ekv7WDa9pq))
+[![Discord](https://img.shields.io/discord/829461142205562890?label=Discord&logo=discord&color=5865F2)](https://discord.gg/ekv7WDa9pq)
 
 ---
 
