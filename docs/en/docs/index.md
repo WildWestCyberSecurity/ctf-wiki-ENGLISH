@@ -1,6 +1,6 @@
 # Introduction
 
-[![Discord](https://dcbadge.vercel.app/api/server/ekv7WDa9pq)](https://discord.gg/ekv7WDa9pq)
+[ctf-wiki-discord](https://discord.gg/ekv7WDa9pq)
 
 
 Welcome to **CTF Wiki**！

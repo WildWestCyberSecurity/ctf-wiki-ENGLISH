@@ -1,6 +1,6 @@
 # CTF Wiki
 
-[![Discord](https://dcbadge.vercel.app/api/server/ekv7WDa9pq)](https://discord.gg/ekv7WDa9pq)
+[ctf-wiki-discord](https://discord.gg/ekv7WDa9pq)
 
 [中文](./README-zh_CN.md)  [English](./README.md)
 
