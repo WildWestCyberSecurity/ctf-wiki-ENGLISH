@@ -1,10 +1,10 @@
 site_name: CTF Wiki
-site_description: CTF Wiki
+site_description: CTF Wiki — English Edition
 site_author: CTF Wiki Team
-site_url: https://ctf-wiki.org/en/
-repo_name: ctf-wiki/ctf-wiki
-repo_url: https://github.com/ctf-wiki/ctf-wiki
-edit_uri: blob/master/docs/zh/docs/
+site_url: https://wildwestcybersecurity.github.io/ctf-wiki-ENGLISH/
+repo_name: WildWestCyberSecurity/ctf-wiki-ENGLISH
+repo_url: https://github.com/WildWestCyberSecurity/ctf-wiki-ENGLISH
+edit_uri: blob/master/docs/en/docs/
 copyright: Copyright &copy; 2016 - 2025 CTF Wiki Team
 theme:
   name: material
@@ -15,7 +15,7 @@ theme:
     scheme: preference
   icon:
     repo: fontawesome/brands/github-alt
-  logo: https://ctf-wiki.org/static/img/logo.png
+  logo: static/img/logo.png
   features:
   - navigation.tabs
   - navigation.tabs.sticky
@@ -600,8 +600,8 @@ extra:
     name: zh-tw - 繁體中文
   copyright: CC BY-NC-SA 4.0
 extra_javascript:
-- https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js
-- https://ctf-wiki.org/static/js/extra.js
-- https://cdnjs.loli.net/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML
+- https://cdnjs.cloudflare.com/ajax/libs/pangu/4.0.7/pangu.min.js
+- static/js/extra.js
+- https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML
 extra_css:
-- https://ctf-wiki.org/static/css/extra.css
+- static/css/extra.css
