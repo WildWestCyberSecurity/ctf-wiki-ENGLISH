@@ -1449,17 +1449,17 @@ Heap structure after reallocation:
 
 ```
 +-----+
-|     | <-- tcache perthread 结构体
+|     | <-- tcache perthread struct
 +-----+
-| ... | <-- 6 个 tcache 块
+| ... | <-- 6 tcache chunks
 +-----+
-|  A  | <-- 3 个 unsorted bin 块
+|  A  | <-- 3 unsorted bin chunks
 +-----+
 |  B  |
 +-----+
 |  C  |
 +-----+
-|     | <-- tcache 块，防止 top 合并
+|     | <-- tcache chunk, prevents top consolidation
 +-----+
 | top |
 |  .. |
@@ -1497,17 +1497,17 @@ The current heap structure is as follows:
 
 ```
 +-----+
-|     | <-- tcache perthread 结构体
+|     | <-- tcache perthread struct
 +-----+
-| ... | <-- 6 个 tcache 块 (free)
+| ... | <-- 6 tcache chunks (free)
 +-----+
 |  A  | <-- free
 +-----+
-|  B  | <-- free 且为 tcache 块
+|  B  | <-- free, tcache chunk
 +-----+
 |  C  |
 +-----+
-|     | <-- tcache 块，防止 top 合并
+|     | <-- tcache chunk, prevents top consolidation
 +-----+
 | top |
 |  .. |
@@ -1540,17 +1540,17 @@ Structure after consolidation:
 
 ```
 +-----+
-|     | <-- tcache perthread 结构体
+|     | <-- tcache perthread struct
 +-----+
-| ... | <-- 6 个 tcache 块 (free)
+| ... | <-- 6 tcache chunks (free)
 +-----+                     --------+
-|  A  | <-- free 大块               |
+|  A  | <-- free large chunk        |
 +-----+                             |
-|  B  | <-- 已分配          --------+--> 一个大 free 块
+|  B  | <-- allocated       --------+--> one large free chunk
 +-----+                             |
 |  C  | <-- free                    |
 +-----+                     --------+
-|     | <-- tcache 块，防止 top 合并 (free)
+|     | <-- tcache chunk, prevents top consolidation (free)
 +-----+
 | top |
 |  .. |
@@ -1577,17 +1577,17 @@ Heap structure:
 
 ```
 +-----+
-|     | <-- tcache perthread 结构体
+|     | <-- tcache perthread struct
 +-----+
-| ... | <-- 6 个 tcache 块 (free)
+| ... | <-- 6 tcache chunks (free)
 +-----+
-|  A  | <-- 已分配
+|  A  | <-- allocated
 +-----+
-|  B  | <-- 已分配          --------+> 一个大 free 块
+|  B  | <-- allocated       --------+> one large free chunk
 +-----+                             |
 |  C  | <-- free                    |
 +-----+                     --------+
-|     | <-- tcache 块，防止 top 合并 (free)
+|     | <-- tcache chunk, prevents top consolidation (free)
 +-----+
 | top |
 |  .. |
