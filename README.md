@@ -1,99 +1,106 @@
-# CTF Wiki
+# CTF Wiki — English Edition
+
+> **An English fork of [ctf-wiki](https://github.com/ctf-wiki/ctf-wiki)** — a comprehensive, community-driven guide to Capture The Flag (CTF) competitions and cybersecurity techniques.
 
 [![Discord](https://dcbadge.vercel.app/api/server/ekv7WDa9pq)](https://discord.gg/ekv7WDa9pq)
 
-[中文](./README-zh_CN.md)  [English](./README.md)
+---
 
-Welcome to **CTF Wiki**！
+## What is CTF Wiki?
 
-**CTF** (Capture The Flag) started from **DEFCON CTF**, a competitive game among computer security enthusiasts, originally hosted in 1996.
+**CTF** (Capture The Flag) competitions have been a cornerstone of the cybersecurity community since the first **DEFCON CTF** in 1996. They cover a wide range of fields — from binary exploitation and reverse engineering to web security and cryptography.
 
-**CTF** covers a wide range of fields. Along with the evolving security technology, the difficulty of **CTF** challenges is getting harder and harder. As a result, the learning curve for beginners is getting steeper. Most online information is scattered and trivial. Beginners often don't know how to systematically learn **CTF**, which requires a lot of work and effort.
+This wiki provides **structured, beginner-friendly documentation** covering the knowledge and techniques used in modern CTF challenges. Whether you're just getting started or looking to sharpen advanced skills, you'll find something useful here.
 
-In order to let those people who are interested in **CTF**s start easily, in October 2016, **CTF Wiki** was established on Github. Along with gradually improved content over time, **CTF Wiki** has received lots of appreciation from security enthusiasts, many of those are guys that we think we would never meet.
+---
 
-As a freedom site, primarily focusing on recent CTFs, **CTF Wiki** introduces the knowledge and techniques in all aspects of **CTF** to make it easier for beginners to learn **CTF**.
+## 📖 Table of Contents
 
-Now, **CTF Wiki** mainly contains the basic skills for **CTF**, but we are working hard to improve the following contents.
+| Section | Description |
+|---------|-------------|
+| [**Introduction**](docs/en/docs/introduction/history.md) | History of CTFs, competition formats, and getting started |
+| [**Pwn (Binary Exploitation)**](docs/en/docs/pwn/) | Stack overflows, heap exploitation, format strings, ROP chains, and more |
+| [**Reverse Engineering**](docs/en/docs/reverse/) | Static & dynamic analysis, common tools, and techniques |
+| [**Web Security**](docs/en/docs/web/) | SQL injection, XSS, CSRF, SSRF, and other web vulnerabilities |
+| [**Cryptography**](docs/en/docs/crypto/) | Classical ciphers, symmetric/asymmetric crypto, hash attacks |
+| [**Miscellaneous**](docs/en/docs/misc/) | Forensics, steganography, network traffic analysis |
+| [**Blockchain**](docs/en/docs/blockchain/) | Smart contract security and blockchain CTF challenges |
+| [**Android**](docs/en/docs/android/) | Android reverse engineering and mobile security |
+| [**Assembly**](docs/en/docs/assembly/) | x86, ARM, MIPS assembly language fundamentals |
+| [**Executable Formats**](docs/en/docs/executable/) | ELF, PE, and other binary format internals |
+| [**ICS (Industrial Control)**](docs/en/docs/ics/) | Industrial control system security |
 
-- Advanced skills used in CTF
-- Special topics appearing in CTF
+### Pwn Deep Dives
 
-For the above-mentioned parts to be improved, please refer to [Projects](https://github.com/ctf-wiki/ctf-wiki/projects) which details what are planned.
+| Topic | Link |
+|-------|------|
+| Stack Overflow (x86) | [Basic ROP](docs/en/docs/pwn/linux/user-mode/stackoverflow/x86/basic-rop.md) · [Medium ROP](docs/en/docs/pwn/linux/user-mode/stackoverflow/x86/medium-rop.md) · [Advanced ROP](docs/en/docs/pwn/linux/user-mode/stackoverflow/x86/advanced-rop/advanced-rop.md) |
+| Stack Overflow (ARM/MIPS) | [ARM ROP](docs/en/docs/pwn/linux/user-mode/stackoverflow/arm/rop.md) · [MIPS ROP](docs/en/docs/pwn/linux/user-mode/stackoverflow/mips/rop.md) |
+| Heap Exploitation | [Overview](docs/en/docs/pwn/linux/user-mode/heap/ptmalloc2/heap-overview.md) · [Heap Structure](docs/en/docs/pwn/linux/user-mode/heap/ptmalloc2/heap-structure.md) · [Use After Free](docs/en/docs/pwn/linux/user-mode/heap/ptmalloc2/use-after-free.md) |
+| Heap Techniques | [House of Force](docs/en/docs/pwn/linux/user-mode/heap/ptmalloc2/house-of-force.md) · [House of Orange](docs/en/docs/pwn/linux/user-mode/heap/ptmalloc2/house-of-orange.md) · [House of Einherjar](docs/en/docs/pwn/linux/user-mode/heap/ptmalloc2/house-of-einherjar.md) · [Unlink](docs/en/docs/pwn/linux/user-mode/heap/ptmalloc2/unlink.md) |
+| Format Strings | [Intro](docs/en/docs/pwn/linux/user-mode/fmtstr/fmtstr-intro.md) · [Exploitation](docs/en/docs/pwn/linux/user-mode/fmtstr/fmtstr-exploit.md) |
 
-Although now **CTF Wiki** mainly focus **CTF**, it is not strictly limited to **CTF** topics. In the future, **CTF Wiki** will include
+---
 
-- Tools used in security research
-- Increased discussion of security in the world
+## 🚀 Quick Start
 
-In addition, given the following two points
+### Browse Online
 
-- Information about technology should be openly shared.
-- As new techniques are always being developed, old techniques will start to fade over time and they should be replaced with new techniques.
+The content lives under [`docs/en/docs/`](docs/en/docs/) — just open any `.md` file on GitHub to start reading.
 
-Therefore, **CTF Wiki** will never publish books.
+### Build Locally
 
-Finally, originating from the community, as an independent organization, **CTF Wiki** advocates **freedom of knowledge**, will **never be commercialized**, and will always maintain the character of **independence and freedom**.
-
-## How to build？
-
-CTF Wiki uses [mkdocs](https://github.com/mkdocs/mkdocs) to show its contents. And it is deployed at [https://ctf-wiki.org](https://ctf-wiki.org).
-
-It can also be deployed locally, with the following steps:
+CTF Wiki uses [MkDocs](https://github.com/mkdocs/mkdocs) with the Material theme:
 
 ```shell
-# 1. clone
-git clone https://github.com/ctf-wiki/ctf-wiki.git
-# 2. requirements
+# 1. Clone this repo
+git clone https://github.com/WildWestCyberSecurity/ctf-wiki-ENGLISH.git
+cd ctf-wiki-ENGLISH
+
+# 2. Install dependencies
 pip install -r requirements.txt
-# generate static file in site/
+
+# 3. Build the site
 python3 scripts/docs.py build-all
-# deploy at http://127.0.0.1:8008
+
+# 4. Serve locally at http://127.0.0.1:8008
 python3 scripts/docs.py serve
 ```
 
-**A local instance of mkdocs is dynamically updated, for instance when a markdown file is modified, the corresponding page will be modified too.**
+Or use Docker:
 
-If you just want to view it statically, try Docker!
-
-```
+```shell
 docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
+# Then open http://localhost:4100/
 ```
-And then access [http://localhost:4100/](http://localhost:4100/) .
 
-## How to practice？
+---
 
-Firstly, learn some basic security knowledge through online reading.
+## 🏋️ How to Practice
 
-Secondly, CTF Wiki has two sister projects.
+1. **Read the wiki** — work through the topics that interest you
+2. **Try the challenges** — all referenced challenges are in [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges)
+3. **Use the tools** — curated tool list at [ctf-tools](https://github.com/ctf-wiki/ctf-tools)
 
-- All of the challenges that are mentioned are in the [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) repository, you can locate them with their corresponding category.
-- The tools mentioned in the CTF Wiki are constantly added to the [ctf-tools](https://github.com/ctf-wiki/ctf-tools) repository.
+---
 
-## How to make CTF Wiki Better？
+## 🤝 Contributing
 
-We welcome to write content for the wiki and share what you have learned. 
+Contributions are welcome! Please read the [Contributing Guide](docs/en/docs/contribute/before-contributing.md) before submitting changes.
 
-**Before you decide to contribute content, please read [CONTRIBUTING](https://ctf-wiki.org/en/contribute/before-contributing/)**.
+---
 
-Thank you to all the people who have already contributed to CTF Wiki.
+## 💡 Tips for Beginners
 
-<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://contrib.rocks/image?repo=ctf-wiki/ctf-wiki" /></a>
+- Learn to ask [smart questions](http://www.catb.org/~esr/faqs/smart-questions.html)
+- Get comfortable with at least one programming language (Python is a great choice)
+- Practice is everything — reading alone won't make you good at CTFs
+- Stay curious and keep learning new techniques
 
-## What can you get?
+---
 
-- Ability to learn new things quickly
-- Different ways of thinking
-- A love for solving problems
-- Interesting security techniques
-- Memorable and enriching experience
+## About This Fork
 
-Before reading the Wiki, we hope to give you some advice:
+This is an **English-only fork** of the original [CTF Wiki](https://github.com/ctf-wiki/ctf-wiki) project, maintained by [WildWestCyberSecurity](https://github.com/WildWestCyberSecurity). The original project was primarily in Chinese — this fork provides translated English content to make these excellent resources accessible to the broader English-speaking security community.
 
-- Learn to ask [smart-questions](http://www.catb.org/~esr/faqs/smart-questions.html) .
-- Learn to use Google Search for self-improvement.
-- Be good at least one programming language, such as Python.
-- Practice is the most important learning tool.
-- Maintain the passions and desire to learn about new techniques.
-
-The security circle is small and the areas of exploration is vast. Let's get started with **CTF Wiki**!
+**CTF Wiki** advocates **freedom of knowledge** and will always remain free, open-source, and non-commercial.
