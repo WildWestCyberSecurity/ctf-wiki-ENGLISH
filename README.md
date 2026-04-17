@@ -45,7 +45,9 @@ This wiki provides **structured, beginner-friendly documentation** covering the 
 
 ### Browse Online
 
-The content lives under [`docs/en/docs/`](docs/en/docs/) — just open any `.md` file on GitHub to start reading.
+👉 **<https://wildwestcybersecurity.github.io/ctf-wiki-ENGLISH/>**
+
+Or browse the raw Markdown under [`docs/en/docs/`](docs/en/docs/) on GitHub.
 
 ### Build Locally
 
