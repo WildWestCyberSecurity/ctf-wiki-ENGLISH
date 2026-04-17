@@ -1037,13 +1037,13 @@ When the smallbin contains free chunks, other free chunks of the same size are s
 
 #### tcache stashing unlink attack
 
-这种攻击利用的是 tcache bin 有剩余(数量小于 `TCACHE_MAX_BINS` )时，同大小的small bin会放进tcache中(这种情况可以用  `calloc` 分配同大小堆块触发，因为 `calloc` 分配堆块时不从 tcache bin 中选取)。在获取到一个 `smallbin` 中的一个chunk后会如果 tcache 仍有足够空闲位置，会将剩余的 small bin 链入 tcache ，在这个过程中只对第一个 bin 进行了完整性检查，后面的堆块的检查缺失。当攻击者可以写一个small bin的bk指针时，其可以在任意地址上写一个libc地址(类似 `unsorted bin attack` 的效果)。构造得当的情况下也可以分配 fake chunk 到任意地址。
+This attack exploits the fact that when the tcache bin has remaining space (count less than `TCACHE_MAX_BINS`), small bins of the same size will be placed into tcache (this can be triggered by using `calloc` to allocate chunks of the same size, because `calloc` does not retrieve chunks from the tcache bin). After obtaining a chunk from a `smallbin`, if tcache still has enough free space, the remaining small bin chunks are linked into tcache. During this process, only the first bin undergoes an integrity check — subsequent chunks are not checked. When an attacker can write a small bin's bk pointer, they can write a libc address to an arbitrary address (similar to the effect of `unsorted bin attack`). With proper construction, it is also possible to allocate a fake chunk to an arbitrary address.
 
-这里以 `how2heap` 中的 `tcache_stashing_unlink_attack.c` 为例。
+Let's use `tcache_stashing_unlink_attack.c` from `how2heap` as an example.
 
-我们按照释放的先后顺序称 `smallbin[sz]` 中的两个 chunk 分别为 chunk0 和 chunk1。我们修改 chunk1 的 `bk` 为 `fake_chunk_addr`。同时还要在 `fake_chunk_addr->bk` 处提前写一个可写地址 `writable_addr` 。调用 `calloc(size-0x10)` 的时候会返回给用户 chunk0 (这是因为 smallbin 的 `FIFO` 分配机制)，假设 `tcache[sz]` 中有 5 个空闲堆块，则有足够的位置容纳 `chunk1` 以及 `fake_chunk` 。在源码的检查中，只对第一个 chunk 的链表完整性做了检测 `__glibc_unlikely (bck->fd != victim)` ，后续堆块在放入过程中并没有检测。
+We refer to the two chunks in `smallbin[sz]` as chunk0 and chunk1 in the order they were freed. We modify chunk1's `bk` to `fake_chunk_addr`. At the same time, we need to write a writable address `writable_addr` at `fake_chunk_addr->bk` in advance. When calling `calloc(size-0x10)`, chunk0 is returned to the user (because of the smallbin's `FIFO` allocation mechanism). Assuming there are 5 free chunks in `tcache[sz]`, there is enough space to accommodate both `chunk1` and `fake_chunk`. In the source code checks, only the first chunk's linked list integrity is verified with `__glibc_unlikely (bck->fd != victim)` — subsequent chunks are not checked during the insertion process.
 
-因为tcache的分配机制是 `LIFO` ，所以位于 `fake_chunk->bk` 指针处的 `fake_chunk` 在链入 tcache 的时候反而会放到链表表头。在下一次调用 `malloc(sz-0x10)` 时会返回 `fake_chunk+0x10` 给用户，同时，由于 `bin->bk = bck;bck->fd = bin;` 的unlink操作，会使得 `writable_addr+0x10` 处被写入一个 libc 地址。
+Because tcache's allocation mechanism is `LIFO`, the `fake_chunk` at the `fake_chunk->bk` pointer is actually placed at the head of the linked list when linked into tcache. On the next call to `malloc(sz-0x10)`, `fake_chunk+0x10` is returned to the user. At the same time, due to the unlink operation `bin->bk = bck; bck->fd = bin;`, a libc address is written at `writable_addr+0x10`.
 
 ```c
 
@@ -1124,9 +1124,9 @@ int main(){
 }
 ```
 
-这个 poc 用栈上的一个数组上模拟 `fake_chunk` 。首先构造出5个 `tcache chunk` 和2个 `smallbin chunk` 的情况。模拟 `UAF` 漏洞修改 `bin2->bk` 为 `fake_chunk` ，在 `calloc(0x90)` 的时候触发攻击。
+This PoC uses an array on the stack to simulate a `fake_chunk`. It first constructs a situation with 5 `tcache chunks` and 2 `smallbin chunks`. It simulates a `UAF` vulnerability to modify `bin2->bk` to `fake_chunk`, triggering the attack during `calloc(0x90)`.
 
-我们在 `calloc` 处下断点，调用前查看堆块排布情况。此时 `tcache[0xa0]` 中有 5 个空闲块。可以看到 chunk1->bk 已经被改为了 `fake_chunk_addr` 。而 `fake_chunk->bk` 也写上了一个可写地址。由于 `smallbin` 是按照 `bk` 指针寻块的，分配得到的顺序应当是 `0x0000000000603250->0x0000000000603390->0x00007fffffffdbc0 (FIFO)` 。调用 calloc 会返回给用户 `0x0000000000603250+0x10`。
+We set a breakpoint at `calloc` and check the heap layout before the call. At this point, `tcache[0xa0]` has 5 free chunks. We can see that chunk1->bk has been changed to `fake_chunk_addr`, and `fake_chunk->bk` has also been set to a writable address. Since `smallbin` finds chunks by following the `bk` pointer, the allocation order should be `0x0000000000603250->0x0000000000603390->0x00007fffffffdbc0 (FIFO)`. Calling calloc will return `0x0000000000603250+0x10` to the user.
 
 ```bash
 gdb-peda$ heapinfo
@@ -1159,7 +1159,7 @@ gdb-peda$ x/4gx 0x00007ffff7dcfd30
 0x7ffff7dcfd40 <main_arena+256>:        0x0000000000603390      0x0000000000603250
 ```
 
-调用 calloc 后再查看堆块排布情况，可以看到 `fake_chunk` 已经被链入 `tcache_entry[8]` ,且因为分配顺序变成了 `LIFO` , `0x7fffffffdbd0-0x10` 这个块被提到了链表头，下次 `malloc(0x90)` 即可获得这个块。
+After calling calloc, checking the heap layout again, we can see that `fake_chunk` has been linked into `tcache_entry[8]`. Because the allocation order becomes `LIFO`, the block at `0x7fffffffdbd0-0x10` has been promoted to the head of the linked list, and `malloc(0x90)` will return this block next time.
 
 Its fd points to the next free chunk. During the unlink process, the assignment operation `bck->fd=bin` writes a libc address at `0x00007fffffffdbd0+0x10`.
 
@@ -1261,7 +1261,7 @@ addr                prev                size                 status             
 
 ### 0x04 Tcache Check
 
-在最新的 libc 的[commit](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blobdiff;f=malloc/malloc.c;h=f730d7a2ee496d365bf3546298b9d19b8bddc0d0;hp=6d7a6a8cabb4edbf00881cb7503473a8ed4ec0b7;hb=bcdaad21d4635931d1bd3b54a7894276925d081d;hpb=5770c0ad1e0c784e817464ca2cf9436a58c9beb7) 中更新了 Tcache 的 double free 的check：
+In the latest libc [commit](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blobdiff;f=malloc/malloc.c;h=f730d7a2ee496d365bf3546298b9d19b8bddc0d0;hp=6d7a6a8cabb4edbf00881cb7503473a8ed4ec0b7;hb=bcdaad21d4635931d1bd3b54a7894276925d081d;hpb=5770c0ad1e0c784e817464ca2cf9436a58c9beb7), the tcache double free check has been updated:
 
 ```c
 index 6d7a6a8..f730d7a 100644 (file)
@@ -1403,7 +1403,7 @@ Due to the existence of tcache, its presence needs to be considered during the e
 
 Generally speaking, when a null-byte-overflow vulnerability appears in a heap program, the approach is to construct overlapping heap chunks, allowing the overlapping chunk to be used multiple times to achieve information leakage and ultimately hijack the control flow.
 
-null-byte-overflow 漏洞的利用方法通过溢出覆盖 prev_in_use 字节使得堆块进行合并，然后使用伪造的 prev_size 字段使得合并时造成堆块交叉。但是本题由于输入函数无法输入 NULL 字符，所以无法输入 prev_size 为 0x_00 的值，而堆块分配大小是固定的，所以直接采用 null-byte-overflow 的方法无法进行利用，需要其他方法写入 prev_size 。
+The null-byte-overflow exploitation method works by overwriting the prev_in_use byte through overflow to trigger chunk consolidation, then using a forged prev_size field to cause chunk overlap during consolidation. However, in this challenge, since the input function cannot accept NULL characters, it is impossible to input prev_size values containing 0x00 bytes, and the chunk allocation size is fixed. Therefore, the null-byte-overflow method cannot be directly used for exploitation — another method is needed to write prev_size.
 
 When there is no way to manually write prev_size but prev_size must be used for exploitation, consider using the system-written prev_size.
 
@@ -1417,7 +1417,7 @@ Specific process:
 4. Use unsorted bin splitting to allocate A 
 5. Use unsorted bin splitting to allocate B, making sure not to overwrite the previous 0x200
 6. Free A again into the unsorted bin, so that fd and bk become valid linked list pointers
-7. 此时 C 前的 prev_size 依然为 0x200（未使用到的值），A B C 的情况： `A (free) -> B (allocated) -> C (free)`，如果使得 B 进行溢出，则可以将已分配的 B 块包含在合并后的释放状态 unsorted bin 块中。
+7. At this point, the prev_size before C is still 0x200 (an unused value). The situation of A, B, C is: `A (free) -> B (allocated) -> C (free)`. If B overflows, the allocated B chunk can be included within the consolidated free unsorted bin chunk.
 
 However, during this process, the impact of tcache needs to be considered.
 
@@ -1425,7 +1425,7 @@ However, during this process, the impact of tcache needs to be considered.
 
 ###### Rearrange heap structure, free unsorted bin chunks
 
-由于本题只有 10 个可分配块数量，而整个过程中我们需要用到 3 个 unsorted bin 的 chunk ，加上 7 个 tcache 的 chunk ，所以需要进行一下重排，将一个 tcache 的 chunk 放到 3 个 unsorted bin chunk 和 top chunk 之间，否则会触发 top 的合并。
+Since this challenge only allows 10 allocatable chunks, and throughout the process we need 3 unsorted bin chunks plus 7 tcache chunks, we need to rearrange by placing one tcache chunk between the 3 unsorted bin chunks and the top chunk, otherwise it would trigger consolidation with the top chunk.
 
 ```python
     # step 1: get three unsortedbin chunks
@@ -1595,7 +1595,7 @@ Heap structure:
 
 ###### tcache UAF attack
 
-接下来，由于 B 块已经是 free 状态，但是又有指针指向，所以我们只需要再次分配，使得有两个指针指向 B 块，之后在 tcache 空间足够时，利用 tcache 进行 double free ，进而通过 UAF 攻击 free hook 即可。
+Next, since chunk B is already in a freed state but still has a pointer pointing to it, we just need to allocate again so that two pointers point to chunk B. Then, when there is enough tcache space, we use tcache to perform a double free, and subsequently attack the free hook via UAF.
 
 
 ```python
@@ -1758,7 +1758,7 @@ zj@zj-virtual-machine:~/c_study/hitcon2018/pwn1$ checksec ./baby_tcache
 
 ##### Basic Functionality
 
-程序的功能很简单 ，就2个功能 ，一个功能为 New 申请使用内存不大于 0x2000 的 chunk ，总共可以申请 10 块 ，通过 bss 段上的一个全局数组 arr 来管理申请的 chunk ，同时 bss 段上的数组 size_arr 来存储相应 chunk 的申请大小 size 。
+The program has very simple functionality — just 2 features. One feature is New, which allocates chunks with memory no larger than 0x2000. A total of 10 chunks can be allocated, managed through a global array `arr` on the bss segment, while an array `size_arr` on the bss segment stores the allocation size of each corresponding chunk.
 
 The program's other feature is delete, which deletes the selected heap chunk. Before deletion, the content area of the chunk is overwritten with 0xdadadada according to the allocated size.
 
@@ -1801,13 +1801,13 @@ int new()
 
 ##### Exploitation Approach
 
-程序的漏洞很容易发现 ，而且申请的 chunk 大小可控 ，所以一般考虑构造 overlapping chunk 处理 。但是问题在于即使把 main_arena 相关的地址写到了 chunk 上 ，也没法调用 show 功能做信息泄露 ，因为程序就没提供这个功能 。
+The vulnerability in the program is easy to find, and since the allocated chunk size is controllable, the general approach is to construct overlapping chunks. However, the problem is that even if the main_arena related address is written onto the chunk, there is no show function available for information leakage, because the program simply does not provide this functionality.
 
 There are two approaches:
 
-1. 可以考虑 partial overwrite 去改掉 main_arena 相关地址的后几个字节 ，利用 tcache 机制把 `__free_hook` chunk 写进 tcache 的链表中 ，后面利用 unsortedbin attack 往 `__free_hook` 里面写上 unsortedbin addr ，后面把 `__free_hook` 分配出来 ，再利用 partial overwrite 在 `__free_hook` 里面写上 one_shoot ，不过这个方法的爆破工作量太大需要 4096 次
+1. Consider using partial overwrite to change the last few bytes of the main_arena related address, use the tcache mechanism to write a `__free_hook` chunk into the tcache linked list, then use unsortedbin attack to write the unsortedbin address into `__free_hook`, allocate `__free_hook` out, and use partial overwrite again to write a one_gadget into `__free_hook`. However, this method requires too much brute-forcing — up to 4096 attempts.
 
-2. 通过 IO file 进行泄露。题目中使用到了 `puts` 函数，会最终调用到 `_IO_new_file_overflow`，该函数会最终使用 `_IO_do_write` 进行真正的输出。在输出时，如果具有缓冲区，会输出 `_IO_write_base` 开始的缓冲区内容，直到 `_IO_write_ptr` （也就是将 `_IO_write_base` 一直到 `_IO_write_ptr` 部分的值当做缓冲区，在无缓冲区时，两个指针指向同一位置，位于该结构体附近，也就是 libc 中），但是在 `setbuf` 后，理论上会不使用缓冲区。然而如果能够修改 `_IO_2_1_stdout_` 结构体的 flags 部分，使得其认为 stdout 具有缓冲区，再将 `_IO_write_base` 处的值进行 partial overwrite ，就可以泄露出 libc 地址了。
+2. Leak through IO file. The challenge uses the `puts` function, which ultimately calls `_IO_new_file_overflow`. This function ultimately uses `_IO_do_write` to perform the actual output. During output, if a buffer exists, it outputs the buffer content starting from `_IO_write_base` up to `_IO_write_ptr` (i.e., the values from `_IO_write_base` to `_IO_write_ptr` are treated as the buffer; when there is no buffer, both pointers point to the same location near the structure, which is within libc). However, after `setbuf`, it theoretically should not use a buffer. Nevertheless, if we can modify the flags portion of the `_IO_2_1_stdout_` structure to make it believe stdout has a buffer, and then perform a partial overwrite of the value at `_IO_write_base`, we can leak the libc address.
 
 Relevant code involved in approach 2:
 
@@ -2011,7 +2011,7 @@ if __name__=='__main__':
 
 ##### Challenge 2 Summary
 
-这个程序的利用过程是一个有用的技巧，这种通过文件结构体的方式来实现内存的读写的相关资料可以参考台湾 Angelboy 的博客。在 hctf2018 steak 中，也存在一个信息泄露的问题，大多数人采用了 copy puts_addr 到 `__free_hook` 指针里实现信息泄露，但实际上也可以通过修改文件结构体的字段来实现信息泄露。
+The exploitation process of this program is a useful technique. For information on using file structures to achieve memory read/write, you can refer to Angelboy's blog from Taiwan. In hctf2018 steak, there was also an information leakage issue — most people adopted the approach of copying puts_addr into the `__free_hook` pointer to achieve information leakage, but it is also possible to achieve information leakage by modifying fields of the file structure.
 
 #### Challenge 3 : 2014 HITCON stkof
 
@@ -2021,7 +2021,7 @@ See [unlink HITCON stkof introduction](./unlink.md#2014 HITCON stkof)
 
 ##### libc 2.26 tcache exploitation method
 
-本题可以溢出较长字节，因此可以覆盖 chunk 的 fd 指针，在 libc 2.26 之后的 tcache 机制中，未对 fd 指针指向的 chunk 进行 size 检查，从而可以将 fd 指针覆盖任意地址。在 free 该被溢出 chunk 并且两次 malloc 后可以实现任意地址修改：
+This challenge allows overflowing a relatively long number of bytes, so the fd pointer of a chunk can be overwritten. In the tcache mechanism after libc 2.26, there is no size check on the chunk pointed to by the fd pointer, so the fd pointer can be overwritten with any address. After freeing the overflowed chunk and performing two mallocs, arbitrary address modification can be achieved:
 
 
 ```python
@@ -2218,7 +2218,7 @@ void __fastcall Delete(__int64 a1, __int64 a2)
   free(*((void **)&unk_4040 + 2 * v2));
 }
 ```
-后门函数可以调用 `malloc` 分配 `0x217` 大小的堆块，但是要要满足 `*(_BYTE *)(qword_4030 + 0x20) > 6` ，我们在 `main` 函数里可以看到这里被初始化为 `heap_base+0x10` ，对于 glibc 2.29，这个位置对应存储的是 `tcache_perthread_struct` 的 `0x220` 大小的 `tcache_bin` 的数量，正常来说，如果我们想调用后门的功能，要让这个 `count` 为 7 ，然而这也就意味着 `0x217` 再分配和释放都同 `glibc 2.23` 一样，我们无法通过 `UAF` 改 chunk 的 `fd` 来达到任意地址写的目的，因此我们要通过别的方式修改这个值。
+The backdoor function can call `malloc` to allocate a heap chunk of size `0x217`, but it requires `*(_BYTE *)(qword_4030 + 0x20) > 6`. In the `main` function, we can see this is initialized to `heap_base+0x10`. For glibc 2.29, this position stores the count of the `0x220` size `tcache_bin` in `tcache_perthread_struct`. Normally, if we want to call the backdoor functionality, we need this `count` to be 7. However, this also means that `0x217` allocation and deallocation would behave the same as in `glibc 2.23` — we cannot use `UAF` to modify the chunk's `fd` to achieve arbitrary address writes. Therefore, we need to modify this value through other means.
 ```c
 __int64 __fastcall Magic(__int64 a1, __int64 a2)
 {
@@ -2240,15 +2240,15 @@ The Edit and Show functions can respectively edit and display heap chunk content
 
 ##### Exploitation Approach
 
-由于 glibc 2.29 中新增了对于 `unsorted bin` 链表完整性检查，这使得 `unsorted bin attack` 完全失效，我们的目标是往一个地址中写入 `large value` ，这种情况下就可以选择 `tcache stashing unlink attack`。
+Since glibc 2.29 added integrity checks for the `unsorted bin` linked list, which completely invalidates `unsorted bin attack`, our goal is to write a `large value` to an address. In this case, we can choose `tcache stashing unlink attack`.
 
-首先我们可以通过UAF来泄露 `heap` 和 `libc` 地址。具体方式是分配并释放多个chunk使其进入 `tcache` ，通过 `Show` 函数可以输出 `tcache bin` 的 `fd` 值来泄露堆地址。释放某个 `small bin size` 范围内的chunk七个，在第八次释放时会先把释放的堆块放入 `unsorted bin` 。通过 `Show` 函数可以泄露出 libc 地址。
+First, we can leak `heap` and `libc` addresses through UAF. The specific method is to allocate and free multiple chunks so they enter `tcache`. Through the `Show` function, we can output the `fd` value of `tcache bin` to leak the heap address. After freeing seven chunks within the `small bin size` range, the eighth free will place the chunk into `unsorted bin`. Through the `Show` function, we can leak the libc address.
 
-我们首先通过 `UAF` 将 `__malloc_hook` 链入 `tcache` 备用。然后分配并释放六次 `0x100` 大小的chunk进入 `tcache` 。通过 `unsorted bin` 切割得到 `last remainer` 的方式得到两个大小为 `0x100` 的chunk。再分配一个超过 0x100 的块使其进入 `small bin` 。按照释放顺序我们称之为 bin1 和 bin2 。修改 `bin2->bk` 为 `(heap_base+0x2f)-0x10` ，调用 `calloc(0xf0)` 触发 `small bin` 放入 `tcache` 的处理逻辑，由于 `tcache` 中有 6 个块，因此循环处理只会进行一次，这样也避免了 fake_chunk 因 bk 处无可写地址作为下一个块进行 unlink 时 `bck->fd=bin` 带来的内存访问错误。最终改掉 `heap_base+0x30` 的值绕过检查。
+We first link `__malloc_hook` into `tcache` through `UAF` for later use. Then we allocate and free chunks of size `0x100` six times into `tcache`. Through `unsorted bin` splitting to obtain the `last remainder`, we get two chunks of size `0x100`. Then we allocate a block larger than 0x100 to make them enter `small bin`. We refer to them as bin1 and bin2 in the order they were freed. We modify `bin2->bk` to `(heap_base+0x2f)-0x10`, and call `calloc(0xf0)` to trigger the logic of placing `small bin` chunks into `tcache`. Since `tcache` already has 6 chunks, the loop only processes once, which also avoids the memory access error caused by `bck->fd=bin` during unlinking when fake_chunk has no writable address at bk for the next chunk. This ultimately changes the value at `heap_base+0x30` to bypass the check.
 
 ##### Exploitation Steps
 
-Let's set a breakpoint before calling calloc. We can see that at this point `tcache[0x100]` has 6 heap chunks, and the smallbin allocation order is `0x000055555555c460->0x55555555cc80->0x000055555555901f`，在 `calloc(0xf0)` 调用后， `0x000055555555c460` 会被返回给用户， `0x55555555cc80` 被链入tcache，而由于没有多余位置，跳出循环， `0x000055555555901f` 不做处理。
+Let's set a breakpoint before calling calloc. We can see that at this point `tcache[0x100]` has 6 heap chunks, and the smallbin allocation order is `0x000055555555c460->0x55555555cc80->0x000055555555901f`. After `calloc(0xf0)` is called, `0x000055555555c460` is returned to the user, `0x55555555cc80` is linked into tcache, and since there is no more space, the loop exits and `0x000055555555901f` is not processed.
 
 ```bash
 gdb-peda$ heapinfo
@@ -2312,7 +2312,7 @@ gdb-peda$ x/4gx 0x000055555555901f+0x10
 0x55555555902f: 0x00007ffff7fb4d90      0x0000000000000000
 0x55555555903f: 0x0000000000000000      0x0000000000000000
 ```
-由于沙箱保护，我们无法执行 `execve` 函数调用，只能通过 `open/read/write` 来读取 flag 。我们选择通过调用后门函数修改 `__malloc_hook` 为 `gadget(mov eax, esi ; add rsp, 0x48 ; ret)` ，以便 add 的时候将 `rsp` 改到可控的输入区域调用 `rop chains` 来 `orw` 读取 `flag` 。
+Due to sandbox protection, we cannot execute `execve` function calls and can only read the flag through `open/read/write`. We choose to modify `__malloc_hook` to `gadget(mov eax, esi ; add rsp, 0x48 ; ret)` by calling the backdoor function, so that when add is called, `rsp` is moved to a controllable input area to execute `rop chains` for `orw` to read the `flag`.
 
 Complete exp is as follows:
 
