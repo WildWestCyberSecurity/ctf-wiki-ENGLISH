@@ -30,7 +30,7 @@ There are no limitations on the note section contents in ELF files.
 
 The .hash section contains the symbol hash table. Details are as follows:
 
-![](./figure/hash_table.png)
+![](./figure/symbol_hash_table.png)
 
 The hash table is used to support symbol table access, helping to improve search speed.
 
